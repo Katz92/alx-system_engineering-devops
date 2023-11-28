@@ -1,20 +1,25 @@
 # Puppet manifest to install nginx
-package { 'nginx':
-  ensure => installed,
+class { 'nginx':
+  package_source => 'nginx-mainline',
+  manage_repo    => true,
 }
 
-file_line { 'aaaaa':
-  ensure => 'present',
-  path   => '/etc/nginx/sites-available/default',
-  after  => 'listen 80 default_server;',
-  line   => 'rewrite ^/redirect_me https://www.youtube.com/watch?v=QH2-TGUlwu4 permanent;',
+nginx::resource::server { 'default':
+  listen_port => 80,
+  www_root    => '/var/www/html',
+  index_files => ['index.html'],
+  use_default_location => false,
+
+  location_cfg_append => {
+    'return' => '301 /redirect_me',
+  },
+
+  location_raw_append => {
+    '/' => [
+      'location / {',
+      '  return 200 "Hello World!";',
+      '}',
+    ],
+  },
 }
 
-file { '/var/www/html/index.html':
-  content => 'Holberton School',
-}
-
-service { 'nginx':
-  ensure  => running,
-  require => Package['nginx'],
-}
